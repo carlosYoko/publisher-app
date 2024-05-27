@@ -5,12 +5,23 @@ namespace Publisher.Data
 {
     public class PubContext : DbContext
     {
+        private StreamWriter _writer = new StreamWriter("EFCoreLog.txt", append: true);
         public DbSet<Author> Authors { get; set; }
         public DbSet<Book> Books { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=PubDatabase;Trusted_Connection=True;");
+            optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Database=PubDatabase;Trusted_Connection=True;")
+                            .LogTo(_writer.WriteLine,
+                                    new[] { DbLoggerCategory.Database.Command.Name }, Microsoft.Extensions.Logging.LogLevel.Information)
+                            .EnableSensitiveDataLogging();
+
+        }
+
+        public override void Dispose()
+        {
+            _writer.Dispose();
+            base.Dispose();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
